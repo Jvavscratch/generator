@@ -1,0 +1,33 @@
+{
+  "name": "@jvavscratch/generator",
+  "version": "1.0.0",
+  "description": "jvavscratch代码生成器模块",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./call-expressions": {
+      "require": "./dist/src/generator/CallExpressionSub/index.js",
+      "import": "./dist/src/generator/CallExpressionSub/index.js",
+      "types": "./dist/src/generator/CallExpressionSub/index.d.ts"
+    },
+    "./types": {
+      "require": "./dist/src/generator/types/index.js",
+      "import": "./dist/src/generator/types/index.js",
+      "types": "./dist/src/generator/types/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@babel/types": "^7.23.6",
+    "@jvavscratch/core": "^1.0.3",
+    "@jvavscratch/types": "^1.0.1",
+    "@jvavscratch/utils": "^1.0.3"
+  }
+}
