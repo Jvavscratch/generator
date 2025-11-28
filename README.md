@@ -24,4 +24,4 @@ const generator = require('@jvavscratch/generator');
 
 ## License
 
-MIT
+MPL-2.0
