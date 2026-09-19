@@ -1,19 +1,19 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : UpdateExpression.ts
 * Description       : Creates an Update expression
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../util/blocks";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { UpdateExpression } from "@babel/types"
-import { BlockOpCode, buildData } from "../util/types";
-import { uuid, includes } from "../util/scratch-uuid"
-import { getScratchType, ScratchType } from "../util/scratch-type";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { uuid, includes } from "@jvavscratch/types"
+import { getScratchType, ScratchType } from "@jvavscratch/types";
 
 module.exports = ((BlockCluster: BlockCluster, UpdateExpression: UpdateExpression, buildData: buildData) => {
 

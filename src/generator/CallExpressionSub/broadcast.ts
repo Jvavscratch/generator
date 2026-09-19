@@ -1,22 +1,23 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : broadcast.ts
-* Description       : Broadcasting library
+* Description       : Broadcasting library (types)
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
 import { CallExpression } from "@babel/types";
-import { BlockOpCode, buildData, typeData } from "../../util/types";
-import { BlockCluster, createBlock } from "../../util/blocks";
-import { getBroadcast } from "../../util/scratch-type"
-import { Error } from "../../util/err";
-import { evaluate } from "../../util/evaluate";
+import { BlockOpCode, buildData, typeData } from "@jvavscratch/types";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
+import { getBroadcast } from "@jvavscratch/types"
+import { JvavscratchError } from "@jvavscratch/core";
+import { evaluate } from "@jvavscratch/core";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { scratchFile } from "@jvavscratch/core";
 
 function createFunction(data: {
     minArgs: number,
@@ -24,7 +25,7 @@ function createFunction(data: {
 }) {
     return ((callExpression: CallExpression, blockCluster: BlockCluster, parentID: string, buildData: buildData) => {
         if (callExpression.arguments.length < data.minArgs) {
-            new Error("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
+            new JvavscratchError("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
         }
 
         let args: typeData[] = [];
@@ -52,7 +53,7 @@ module.exports = {
                 firstArg = args[0].value;
             }
 
-            let broadcasts = join(__dirname, "../../assets/broadcasts.json");
+            let broadcasts = scratchFile("broadcasts.json");
             let broadcastArr = (JSON.parse(readFileSync(broadcasts).toString()) as string[]);
             
             if (!broadcastArr.includes(firstArg)) broadcastArr.push(firstArg);
@@ -81,7 +82,7 @@ module.exports = {
                 firstArg = args[0].value;
             }
 
-            let broadcasts = join(__dirname, "../../assets/broadcasts.json");
+            let broadcasts = scratchFile("broadcasts.json");
             let broadcastArr = (JSON.parse(readFileSync(broadcasts).toString()) as string[]);
             
             if (!broadcastArr.includes(firstArg)) broadcastArr.push(firstArg);

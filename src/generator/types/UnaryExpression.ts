@@ -1,20 +1,21 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : UnaryExpression.ts
-* Description       : Creates a unary expression, that be "+", "-", or "!".
+* Description       : Creates a unary expression block, that be "+",
+*                   ： "-", or "!".
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../../util/blocks";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { UnaryExpression } from "@babel/types"
-import { getBlockNumber, getScratchType, ScratchType } from "../../util/scratch-type"
-import { evaluate } from "../../util/evaluate"
-import { includes, uuid } from "../../util/scratch-uuid";
-import { BlockOpCode, buildData } from "../../util/types";
+import { getBlockNumber, getScratchType, ScratchType } from "@jvavscratch/types"
+import { evaluate } from "@jvavscratch/core"
+import { includes, uuid } from "@jvavscratch/types";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
 
 module.exports = ((BlockCluster: BlockCluster, UnaryExpression: UnaryExpression, ParentID: string, buildData: buildData) => {
     const id = uuid(includes.scratch_alphanumeric, 16);    

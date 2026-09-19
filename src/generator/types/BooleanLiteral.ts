@@ -1,19 +1,19 @@
 ﻿/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : BooleanLiteral.ts
-* Description       : Creates a boolean
+* Description       : Creates a boolean block
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../../util/blocks";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { BooleanLiteral } from "@babel/types"
-import { getBlockNumber, getScratchType, ScratchType } from "../../util/scratch-type"
-import { includes, uuid } from "../../util/scratch-uuid";
-import { BlockOpCode } from "../../util/types";
+import { getBlockNumber, getScratchType, ScratchType } from "@jvavscratch/types"
+import { includes, uuid } from "@jvavscratch/types";
+import { BlockOpCode } from "@jvavscratch/types";
 
 module.exports = ((BlockCluster: BlockCluster, BooleanLiteral: BooleanLiteral, ParentIndex: string) => {
     let key = uuid(includes.scratch_alphanumeric, 16);

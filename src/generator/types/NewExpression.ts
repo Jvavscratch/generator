@@ -1,24 +1,25 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
-* File Name         : StringLiteral.ts
-* Description       : Creates a string
+* File Name         : NewExpression.ts
+* Description       : Creates a new expression block
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock, createMutation } from "../../util/blocks";
+import { BlockCluster, createBlock, createMutation } from "@jvavscratch/core";
 import { CallExpression, ClassMethod, Expression, Identifier, isVariableDeclaration, NewExpression, VariableDeclaration } from "@babel/types"
-import { getBlockNumber, getScratchType, getSubstack, ScratchType } from "../../util/scratch-type"
-import { includes, uuid } from "../../util/scratch-uuid";
+import { getBlockNumber, getScratchType, getSubstack, ScratchType } from "@jvavscratch/types"
+import { includes, uuid } from "@jvavscratch/types";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { evaluate } from "../../util/evaluate";
-import { BlockOpCode, buildData } from "../../util/types";
-import { createFunction, createLibrary } from "../../util/lib-convert";
-import { Error, FatalErr } from "../../util/err";
+import { evaluate } from "@jvavscratch/core";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { createFunction, createLibrary } from "@jvavscratch/utils";
+import { JvavscratchError, FatalErr } from "@jvavscratch/core";
+import { scratchFile } from "@jvavscratch/core";
 
 module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDeclaration, NewExpression: NewExpression, buildData: buildData, varname: string) => {
     if (!isVariableDeclaration(VariableDeclaration)) {
@@ -29,7 +30,7 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
     let repeatID = uuid(includes.scratch_alphanumeric, 16);
     let instanceID = uuid(includes.scratch_alphanumeric, 16);
 
-    let classes = JSON.parse(readFileSync(join(__dirname, '../../assets/classData.json')).toString());
+    let classes = JSON.parse(readFileSync(scratchFile("classData.json")).toString());
     let iden = (NewExpression.callee as Identifier);
     let plainName = iden.name;
     let className = `${plainName}.instances`
@@ -37,7 +38,7 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
 
     // TODO: Check if the class exists
     if (!classes[plainName]) {
-        new Error("Reference found to non-existant class", buildData.originalSource, [ { line: iden.loc.start.line, column: iden.loc.start.column, length: iden.loc.end.column - iden.loc.start.column } ], VariableDeclaration.loc.filename).displayError();
+        new JvavscratchError("Reference found to non-existant class", buildData.originalSource, [ { line: iden.loc.start.line, column: iden.loc.start.column, length: iden.loc.end.column - iden.loc.start.column } ], VariableDeclaration.loc.filename).displayError();
     }
 
     BlockCluster.addBlocks({
@@ -298,7 +299,7 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
     );
 
     classes[(NewExpression.callee as Identifier).name].instances += 1;
-    writeFileSync(join(__dirname, '../../assets/classData.json'), JSON.stringify(classes))
+    writeFileSync(scratchFile("classData.json"), JSON.stringify(classes))
 
     return {
         keysGenerated: [repeatID]

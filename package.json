@@ -1,33 +1,40 @@
 {
   "name": "@jvavscratch/generator",
   "version": "1.0.0",
-  "description": "jvavscratch代码生成器模块",
+  "description": "jvavscratch 代码生成器：AST 节点 → Scratch 积木，并在导入时注册进 core 的派发表",
+  "license": "MPL-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/index.js"
     },
-    "./call-expressions": {
-      "require": "./dist/src/generator/CallExpressionSub/index.js",
-      "import": "./dist/src/generator/CallExpressionSub/index.js",
-      "types": "./dist/src/generator/CallExpressionSub/index.d.ts"
-    },
-    "./types": {
-      "require": "./dist/src/generator/types/index.js",
-      "import": "./dist/src/generator/types/index.js",
-      "types": "./dist/src/generator/types/index.d.ts"
+    "./optimise": {
+      "types": "./dist/optimise/index.d.ts",
+      "require": "./dist/optimise/index.js",
+      "import": "./dist/optimise/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsc -w",
+    "prepare": "tsc"
   },
   "dependencies": {
     "@babel/types": "^7.23.6",
-    "@jvavscratch/core": "^1.0.3",
-    "@jvavscratch/types": "^1.0.1",
-    "@jvavscratch/utils": "^1.0.3"
+    "@jvavscratch/core": "github:Jvavscratch/core",
+    "@jvavscratch/types": "github:Jvavscratch/types",
+    "@jvavscratch/utils": "github:Jvavscratch/utils"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
   }
 }

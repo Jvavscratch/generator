@@ -1,28 +1,28 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : pen.ts
-* Description       : Pen library
+* Description       : Pen library (types)
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
 import { CallExpression, stringLiteral } from "@babel/types";
-import { BlockOpCode, buildData, typeData } from "../../util/types";
-import { BlockCluster, createBlock } from "../../util/blocks";
-import { includes, uuid } from "../../util/scratch-uuid"
-import { getBlockNumber, getColor, getMenu, getScratchType, ScratchType } from "../../util/scratch-type"
-import { Error } from "../../util/err";
-import { evaluate } from "../../util/evaluate";
+import { BlockOpCode, buildData, typeData } from "@jvavscratch/types";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
+import { includes, uuid } from "@jvavscratch/types"
+import { getBlockNumber, getColor, getMenu, getScratchType, ScratchType } from "@jvavscratch/types"
+import { JvavscratchError } from "@jvavscratch/core";
+import { evaluate } from "@jvavscratch/core";
 function createFunction(data: {
     minArgs: number,
     body: (parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string, buildData: buildData) => void
 }) {
     return ((callExpression: CallExpression, blockCluster: BlockCluster, parentID: string, buildData: buildData) => {
         if (callExpression.arguments.length < data.minArgs) {
-            new Error("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
+            new JvavscratchError("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
         }
 
         let args: typeData[] = [];

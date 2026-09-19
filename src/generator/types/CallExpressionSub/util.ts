@@ -1,20 +1,24 @@
 /*******************************************************************
 * Copyright         : 2024 saaawdust
-* File Name         : variable.ts
-* Description       : Variable library (types)
-*                    
+* File Name         : util.ts
+* Description       : Utility library (types)
+*
 * Revision History  :
 * Date        Author          Comments
 * ------------------------------------------------------------------
 * 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { CallExpression, StringLiteral } from "@babel/types";
+import { CallExpression, NumericLiteral, StringLiteral } from "@babel/types";
 import { BlockOpCode, buildData, typeData } from "@jvavscratch/types";
 import { BlockCluster, createBlock } from "@jvavscratch/core";
+import { includes, uuid } from "@jvavscratch/types"
+import { getBlockNumber, getScratchType, getVariable, ScratchType } from "@jvavscratch/types"
 import { JvavscratchError } from "@jvavscratch/core";
 import { evaluate } from "@jvavscratch/core";
-
+import { readFileSync } from "fs";
+import { join } from "path";
+import { scratchFile } from "@jvavscratch/core";
 
 function createFunction(data: {
     minArgs: number,
@@ -42,50 +46,28 @@ function createFunction(data: {
             }
         }
 
-        data.body(args, callExpression, blockCluster, parentID, buildData);
+        return data.body(args, callExpression, blockCluster, parentID, buildData);
     })
 }
 
 module.exports = {
-    show: createFunction({
+    getReturnAddress: createFunction({
         minArgs: 1,
         argTypes: ["StringLiteral"],
         doParse: false,
-        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string) => {
-            let value = (callExpression.arguments[0] as StringLiteral).value;
-            
-            blockCluster.addBlocks({
-                [parentID]: createBlock({
-                    opcode: BlockOpCode.DataShowVariable,
-                    fields: {
-                        "VARIABLE": [
-                            value,
-                            value
-                        ],
-                    }
-                })
-            })
-        })
-    }),
+        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, pd, bd) => {
+            let jsonFile = JSON.parse(readFileSync(scratchFile("fn.json")).toString());
+            let strValue = (callExpression.arguments[0] as StringLiteral).value;
 
-    hide: createFunction({
-        minArgs: 1,
-        argTypes: ["StringLiteral"],
-        doParse: false,
-        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string) => {
-            let value = (callExpression.arguments[0] as StringLiteral).value;
-            
-            blockCluster.addBlocks({
-                [parentID]: createBlock({
-                    opcode: BlockOpCode.DataHideVariable,
-                    fields: {
-                        "VARIABLE": [
-                            value,
-                            value
-                        ],
-                    }
-                })
-            })
+            if (!jsonFile[strValue]) {
+                new JvavscratchError("Reference found to non-existant function", bd.originalSource, [ { line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: 1 } ], callExpression.loc?.filename || "").displayError();
+            }
+
+            return {
+                block: getVariable(jsonFile[strValue].retCode),
+                blockId: null,
+                isStaticBlock: true
+            }
         })
     }),
 }

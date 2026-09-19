@@ -1,22 +1,22 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : CallExpression.ts
 * Description       : Creates an call expression (type)
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
 import { CallExpression, Identifier } from "@babel/types";
-import { BlockCluster } from "../../util/blocks";
-import { buildData } from "../../util/types";
-import { existsSync, readFileSync } from "fs";
-import { Warn } from "../../util/err";
+import { BlockCluster, getLibrary } from "@jvavscratch/core";
+import { buildData } from "@jvavscratch/types";
+import { readFileSync } from "fs";
+import { Warn } from "@jvavscratch/core";
 import { join } from "path";
-import { includes, uuid } from "../../util/scratch-uuid";
-import { getScratchType, getVariable, ScratchType } from "../../util/scratch-type";
+import { includes, uuid } from "@jvavscratch/types";
+import { getScratchType, getVariable, ScratchType } from "@jvavscratch/types";
 
 module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, p_: string, buildData: buildData) => {
     let callee = (CallExpression as any).callee;
@@ -25,10 +25,10 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, p
         let libName = callee.object.name;
         let fnName = callee.property.name;
 
-        let fullPath = join(__dirname, "CallExpressionSub", libName + ".ts");
-        let requiredLib: any;
-        if (!existsSync(fullPath)) {
-            // Check if this is a packaged library.
+                // 内置库优先(与拆分前一致),其次第三方运行时包。
+        let requiredLib: any = getLibrary("value", libName);
+
+        if (!requiredLib) {
             let valueLibs: any[] = buildData.packages.libraries.valueLibraries;
             let finished = false;
             let endLoop = false;
@@ -45,8 +45,6 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, p
                 Warn(`Unknown library, got: '${libName}'`);
                 return { err: true };
             }
-        } else {
-            requiredLib = require(fullPath);
         }
 
         let requiredFn = requiredLib[fnName];

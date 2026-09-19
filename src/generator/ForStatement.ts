@@ -1,22 +1,22 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : ForStatement.ts
 * Description       : Creates a For Statement
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../util/blocks";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { BlockStatement, Expression, ForStatement, Identifier, SourceLocation, Statement } from "@babel/types"
-import { BlockOpCode, buildData } from "../util/types";
-import { parseProgram } from "../env/parseProgram";
-import { includes, uuid } from "../util/scratch-uuid";
-import { evaluate } from "../util/evaluate";
-import { getBlockNumber, getScratchType, getSubstack, ScratchType } from "../util/scratch-type";
-import { Error } from "../util/err";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { parseProgram } from "@jvavscratch/core";
+import { includes, uuid } from "@jvavscratch/types";
+import { evaluate } from "@jvavscratch/core";
+import { getBlockNumber, getScratchType, getSubstack, ScratchType } from "@jvavscratch/types";
+import { JvavscratchError } from "@jvavscratch/core";
 import { updateExpression } from "@babel/types";
 
 function parseWhile(Block_Cluster: BlockCluster, ForStatement: ForStatement, buildData: buildData) {
@@ -29,24 +29,29 @@ function parseWhile(Block_Cluster: BlockCluster, ForStatement: ForStatement, bui
     let endCondition = (ForStatement.test as Expression);
     let update = (ForStatement.update  as Expression);
 
-    // Make sure it matches the criteria.
-    if ((varDeclared).type != "Identifier") {
-        new Error("The first argument of a For loop must be an identifier.", buildData.originalSource, [{ line: varDeclared?.loc?.start.line || 1, length: 5, column: varDeclared?.loc?.start.column || 1 }], ForStatement.loc?.filename || "")
+    // Extract loop variable from Identifier or AssignmentExpression
+    let loopVar: any = null;
+    if (varDeclared?.type === "AssignmentExpression" && (varDeclared as any).left?.type === "Identifier") {
+        loopVar = (varDeclared as any).left;
+    } else if (varDeclared?.type === "Identifier") {
+        loopVar = varDeclared;
+    } else {
+        new JvavscratchError("The first argument of a For loop must be an identifier or assignment expression.", buildData.originalSource, [{ line: varDeclared?.loc?.start.line || 1, length: 5, column: varDeclared?.loc?.start.column || 1 }], ForStatement.loc?.filename || "")
         return;
     }
 
-    if (!(endCondition.type == "BinaryExpression" && ["<", ">", "==", "===", "!=", "!=="].includes((endCondition).operator)) && (endCondition).type != "LogicalExpression" && endCondition.type != "UnaryExpression") {
-        new Error("The second argument of a For loop must be a valid expression (Binary / logical expression).", buildData.originalSource, [{ line: endCondition?.loc?.start.line || 1, length: 5, column: endCondition?.loc?.start.column || 1 }], ForStatement.loc?.filename || "")
+    if (!(endCondition.type == "BinaryExpression" && ["<", ">", "<=", ">=", "==", "===", "!=", "!=="].includes((endCondition).operator)) && (endCondition).type != "LogicalExpression" && endCondition.type != "UnaryExpression") {
+        new JvavscratchError("The second argument of a For loop must be a valid expression (Binary / logical expression).", buildData.originalSource, [{ line: endCondition?.loc?.start.line || 1, length: 5, column: endCondition?.loc?.start.column || 1 }], ForStatement.loc?.filename || "")
         return;
     }
 
     if (!update)
     {
-        update = updateExpression("++", varDeclared);
+        update = updateExpression("++", loopVar);
     }
 
     if ((update).type != "UpdateExpression" && (update).type != "AssignmentExpression") {
-        new Error("The last argument of a For loop must be an update, or assignment expression.", buildData.originalSource, [{ line: update?.loc?.start.line || 1, length: 5, column: update?.loc?.start.column || 1 }], ForStatement.loc?.filename || "")
+        new JvavscratchError("The last argument of a For loop must be an update, or assignment expression.", buildData.originalSource, [{ line: update?.loc?.start.line || 1, length: 5, column: update?.loc?.start.column || 1 }], ForStatement.loc?.filename || "")
         return;
     }
 

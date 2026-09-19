@@ -1,23 +1,24 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : CallExpression.ts
 * Description       : Creates an call expression
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
 import { CallExpression } from "@babel/types";
-import { BlockCluster, createBlock, createMutation } from "../util/blocks";
-import { BlockOpCode, buildData } from "../util/types";
-import { existsSync, readFileSync } from "fs";
-import { Warn } from "../util/err";
+import { BlockCluster, createBlock, createMutation, getLibrary } from "@jvavscratch/core";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { readFileSync } from "fs";
+import { Warn } from "@jvavscratch/core";
 import { join } from "path";
-import { includes, uuid } from "../util/scratch-uuid";
-import { getBlockNumber, getBroadcast, getScratchType, getVariable, ScratchType } from "../util/scratch-type";
-import { evaluate } from "../util/evaluate";
+import { includes, uuid } from "@jvavscratch/types";
+import { getBlockNumber, getBroadcast, getScratchType, getVariable, ScratchType } from "@jvavscratch/types";
+import { evaluate } from "@jvavscratch/core";
+import { scratchFile } from "@jvavscratch/core";
 
 module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, buildData: buildData) => {
     let callee = (CallExpression as any).callee;
@@ -26,10 +27,10 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, b
         let libName = callee.object.name;
         let fnName = callee.property.name;
 
-        let fullPath = join(__dirname, "CallExpressionSub", libName + ".ts");
-        let requiredLib: any;
-        if (!existsSync(fullPath)) {
-            // Check if this is a packaged library.
+                // 内置库优先(与拆分前一致),其次第三方运行时包。
+        let requiredLib: any = getLibrary("block", libName);
+
+        if (!requiredLib) {
             let valueLibs: any[] = buildData.packages.libraries.blockLibraries;
             let finished = false;
             let endLoop = false;
@@ -46,8 +47,6 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, b
                 Warn(`Unknown library, got: '${libName}'`);
                 return { err: true };
             }
-        } else {
-            requiredLib = require(fullPath);
         }
         let requiredFn = requiredLib[fnName];
 
@@ -79,7 +78,7 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, b
 
         argumentids += "]";
 
-        let path = join(__dirname, '../assets/fn.json');
+        let path = scratchFile("fn.json");
         let fnData = JSON.parse(readFileSync(path).toString());
         if (fnData[originalName].async) {
             // Async code
@@ -216,20 +215,29 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, b
                 return { keysGenerated: [broadcastId] }
             }
         } else {
+            let mutationData: any = {
+                tagName: "mutation",
+                children: [],
+                proccode: fnName + " " + "%s ".repeat(CallExpression.arguments.length).trimEnd(),
+                argumentids,
+                warp: wasTurbo && "true" || "false",
+            };
+
+            if (buildData.customBlockReturn && fnData[originalName].returnType) {
+                mutationData.return = fnData[originalName].returnType;
+            }
+
             BlockCluster.addBlocks({
                 [ID]: createMutation({
                     opcode: BlockOpCode.ProceduresCall,
                     inputs,
-                    mutation: {
-                        tagName: "mutation",
-                        children: [],
-                        proccode: fnName + " " + "%s ".repeat(CallExpression.arguments.length).trimEnd(),
-                        argumentids,
-                        warp: wasTurbo && "true" || "false",
-                    }
+                    mutation: mutationData
                 })
             });
 
+            if (buildData.customBlockReturn && fnData[originalName].returnType) {
+                return { keysGenerated: [ID], block: getBlockNumber(ID) };
+            }
 
             return { keysGenerated: [ID] };
         }

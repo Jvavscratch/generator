@@ -1,22 +1,23 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : VariableDeclaration.ts
 * Description       : Creates a VariableDeclaration (Set variable to X)
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../util/blocks";
+import { BlockCluster, createBlock, createMutation } from "@jvavscratch/core";
 import { VariableDeclaration } from "@babel/types"
-import { Block, BlockOpCode, buildData, typeData } from "../util/types";
-import { getScratchType, ScratchType } from "../util/scratch-type";
-import { uuid, includes } from "../util/scratch-uuid"
-import { evaluate } from "../util/evaluate";
+import { Block, BlockOpCode, buildData, typeData } from "@jvavscratch/types";
+import { getScratchType, ScratchType, getVariable, getBlockNumber } from "@jvavscratch/types";
+import { uuid, includes } from "@jvavscratch/types"
+import { evaluate } from "@jvavscratch/core";
 import { join } from "path";
 import { readFileSync, writeFileSync } from "fs";
+import { scratchFile } from "@jvavscratch/core";
 
 module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDeclaration, buildData: buildData) => {
 
@@ -45,7 +46,7 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
         }
 
         if (local) {
-            let jsonFile = join(__dirname, "../assets/variables.json");
+            let jsonFile = scratchFile("variables.json");
             let content = JSON.parse(readFileSync(jsonFile).toString()) as any[];
             content.push(variableName);
 
@@ -54,6 +55,92 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
 
         if (declarations.init != null && declarations.init.type == "NewExpression") {
             return require('./types/NewExpression')(BlockCluster, VariableDeclaration, declarations.init, buildData, variableName)
+        }
+
+        // 自定义函数调用：let x = foo() -> 先调用 foo()，再把返回值赋给 x
+        if (declarations.init != null && declarations.init.type == "CallExpression") {
+            let callee = (declarations.init as any).callee;
+            if (callee && callee.type === "Identifier") {
+                let fnName = callee.name;
+                let originalName = fnName;
+                let wasTurbo = fnName.startsWith("turbo_");
+                if (wasTurbo) {
+                    fnName = fnName.substring(6);
+                }
+
+                let fnJsonPath = scratchFile("fn.json");
+                let fnData = JSON.parse(readFileSync(fnJsonPath).toString());
+
+                if (fnData[originalName] && !fnData[originalName].async) {
+                    let callId = uuid(includes.scratch_alphanumeric, 16);
+                    let inputs: { [key: string]: any } = {};
+                    let argumentids = "[";
+                    let callExpr = declarations.init as any;
+
+                    for (let j = 0; j < callExpr.arguments.length; j++) {
+                        let code = fnName + "_" + j;
+                        let param = callExpr.arguments[j];
+                        inputs[code] = evaluate(param.type, BlockCluster, param, callId, buildData).block;
+                        let hasNext = (j + 1) <= (callExpr.arguments.length - 1);
+                        argumentids += `"${code}"${hasNext && "," || ""}`;
+                    }
+                    argumentids += "]";
+
+                    let mutationData: any = {
+                        tagName: "mutation",
+                        children: [],
+                        proccode: fnName + " " + "%s ".repeat(callExpr.arguments.length).trimEnd(),
+                        argumentids,
+                        warp: wasTurbo && "true" || "false",
+                    };
+
+                    if (buildData.customBlockReturn && fnData[originalName].returnType) {
+                        mutationData.return = fnData[originalName].returnType;
+                    }
+
+                    blocks[callId] = createMutation({
+                        opcode: BlockOpCode.ProceduresCall,
+                        inputs,
+                        mutation: mutationData
+                    });
+
+                    let assignId = uuid(includes.scratch_alphanumeric, 16);
+
+                    if (buildData.customBlockReturn && fnData[originalName].returnType) {
+                        // TurboWarp 返回值扩展：procedures_call 作为 reporter 嵌入
+                        blocks[callId].parent = assignId;
+                        blocks[assignId] = createBlock({
+                            opcode: BlockOpCode.DataSetVariableTo,
+                            inputs: {
+                                "VALUE": getBlockNumber(callId)
+                            },
+                            fields: {
+                                "VARIABLE": [variableName, variableName]
+                            }
+                        });
+                    } else {
+                        // 普通模式：先调用，再读取临时变量
+                        let retCode = fnData[originalName].retCode;
+                        let valueBlock = retCode ? getVariable(retCode) : getScratchType(ScratchType.number, 0);
+
+                        blocks[assignId] = createBlock({
+                            opcode: BlockOpCode.DataSetVariableTo,
+                            inputs: {
+                                "VALUE": valueBlock
+                            },
+                            fields: {
+                                "VARIABLE": [variableName, variableName]
+                            }
+                        });
+
+                        blocks[callId].next = assignId;
+                        blocks[assignId].parent = callId;
+                    }
+
+                    keysGenerated.push(callId, assignId);
+                    continue;
+                }
+            }
         }
 
         let id = uuid(includes.scratch_alphanumeric, 16);

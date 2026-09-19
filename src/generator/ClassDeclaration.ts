@@ -1,20 +1,21 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : ClassDeclaration.ts
 * Description       : Creates a class
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster } from "../util/blocks";
+import { BlockCluster } from "@jvavscratch/core";
 import { ClassDeclaration, ClassMethod, functionDeclaration, identifier, Identifier, numericLiteral } from "@babel/types"
-import { buildData } from "../util/types";
-import { Error } from "../util/err";
+import { buildData } from "@jvavscratch/types";
+import { JvavscratchError } from "@jvavscratch/core";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { scratchFile } from "@jvavscratch/core";
 
 module.exports = ((BlockCluster: BlockCluster, ClassDeclaration: ClassDeclaration, buildData: buildData) => {
     let keysGenerated: string[] = [];
@@ -25,7 +26,7 @@ module.exports = ((BlockCluster: BlockCluster, ClassDeclaration: ClassDeclaratio
     let classBody = ClassDeclaration.body;
     let classData = classBody.body;
 
-    let jsonPath = join(__dirname, '../assets/classData.json');
+    let jsonPath = scratchFile("classData.json");
     let classDataJson = JSON.parse(readFileSync(jsonPath).toString())
     classDataJson[className] = {
         ["params"]: [],

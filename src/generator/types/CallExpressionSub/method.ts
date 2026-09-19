@@ -13,7 +13,7 @@ import { CallExpression, NumericLiteral, StringLiteral } from "@babel/types";
 import { BlockOpCode, buildData, typeData } from "@jvavscratch/types";
 import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { includes, uuid } from "@jvavscratch/types"
-import { getBlockNumber, getScratchType, getSubstack, getVariable, ScratchType } from "@jvavscratch/types"
+import { getBlockNumber, getScratchType, getVariable, ScratchType } from "@jvavscratch/types"
 import { JvavscratchError } from "@jvavscratch/core";
 import { evaluate } from "@jvavscratch/core";
 import { readFileSync } from "fs";
@@ -42,7 +42,7 @@ function createFunction(data: {
                     evaluate(type, blockCluster, callExpression.arguments[i], parentID, buildData)
                 )
             } else if (data.argTypes && data.argTypes[i] && data.argTypes[i] != type) {
-                new JvavscratchError(`Expected '${data.argTypes[i]}' for argument '${i + 1}', got: '${type}'`, (buildData.originalSource || "").substring(callExpression.loc?.start.index || 0, callExpression.loc?.end.index || 0), [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
+                new JvavscratchError(`Expected '${data.argTypes[i]}' for argument '${i + 1}', got: '${type}'`, buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
             }
         }
 
@@ -51,31 +51,14 @@ function createFunction(data: {
 }
 
 module.exports = {
-    cleanup: createFunction({
-        minArgs: 1,
-        argTypes: ["StringLiteral"],
-        doParse: false,
-        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string) => {
-            blockCluster.addBlocks({
-                [parentID]: createBlock({
-                    opcode: BlockOpCode.DataDeleteAllOfList,
-                    fields: {
-                        ["LIST"]: [
-                            (callExpression.arguments[0] as StringLiteral).value + ".instances"
-                        ]
-                    }
-                })
-            });
-        })
-    }),
-
-    set: createFunction({
-        minArgs: 4,
+    get: createFunction({
+        minArgs: 3,
         argTypes: ["StringLiteral", "StringLiteral", "StringLiteral"],
-        doParse: true,
-        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string, bd) => {
+        doParse: false,
+        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, pd, bd) => {
             let base = uuid(includes.scratch_alphanumeric, 16);
             let add = uuid(includes.scratch_alphanumeric, 16);
+            let top = uuid(includes.scratch_alphanumeric, 16);
 
             let listName = (callExpression.arguments[0] as StringLiteral).value + ".instances";
             let jsonFile = JSON.parse(readFileSync(scratchFile("classData.json")).toString());
@@ -85,7 +68,7 @@ module.exports = {
             }
             
             let value = (jsonFile[(callExpression.arguments[0] as StringLiteral).value] as any).paramnames.indexOf((callExpression.arguments[2] as StringLiteral).value) + 1
-            
+
             blockCluster.addBlocks({
                 [add]: createBlock({
                     opcode: BlockOpCode.OperatorAdd,
@@ -95,10 +78,9 @@ module.exports = {
                     },
                 }),
 
-                [parentID]: createBlock({
-                    opcode: BlockOpCode.DataReplaceItemOfList,
+                [top]: createBlock({
+                    opcode: BlockOpCode.DataItemOfList,
                     inputs: {
-                        "ITEM": parsedArguments[3].block,
                         "INDEX": getBlockNumber(add)
                     },
 
@@ -124,99 +106,65 @@ module.exports = {
                     }
                 })
             });
+
+            return {
+                block: getBlockNumber(top),
+                blockId: null,
+                isStaticBlock: true
+            }
         })
     }),
 
-    destroy: createFunction({
-        minArgs: 2,
-        argTypes: ["StringLiteral", "StringLiteral"],
-        doParse: true,
-        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string) => {
+    instancesOf: createFunction({
+        minArgs: 1,
+        argTypes: ["StringLiteral"],
+        doParse: false,
+        body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, a: string, bd) => {
             let listName = (callExpression.arguments[0] as StringLiteral).value + ".instances";
-            let tmpName = uuid(includes.alphanumeric, 5);
+            let base = uuid(includes.scratch_alphanumeric, 16);
+            let div = uuid(includes.scratch_alphanumeric, 16);
+            let pd = uuid(includes.scratch_alphanumeric, 16);
 
-            let ids = [
-                uuid(includes.scratch_alphanumeric, 16),
-                uuid(includes.scratch_alphanumeric, 16),
-                uuid(includes.scratch_alphanumeric, 16),
-                uuid(includes.scratch_alphanumeric, 16),
-                uuid(includes.scratch_alphanumeric, 16),
-            ];
+            let jsonFile = JSON.parse(readFileSync(scratchFile("classData.json")).toString());
+            
+            if (!jsonFile[(callExpression.arguments[0] as StringLiteral).value]) {
+                new JvavscratchError("Reference found to non-existant class", bd.originalSource, [ { line: callExpression.loc.start.line, column: callExpression.loc.start.column, length: 1 } ], callExpression.loc.filename).displayError();
+            }
 
             blockCluster.addBlocks({
-                [parentID]: createBlock({
-                    opcode: BlockOpCode.ControlRepeat,
-                    inputs: {
-                        "TIMES": getScratchType(ScratchType.number, 1),
-                        "SUBSTACK": getSubstack(ids[0])
-                    }
-                }),
-
-                [ids[0]]: createBlock({
-                    opcode: BlockOpCode.DataSetVariableTo,
-                    next: ids[2],
-                    inputs: {
-                        "VALUE": getBlockNumber(ids[1])
-                    },
+                [base]: createBlock({
+                    opcode: BlockOpCode.DataLengthOfList,
+                    parent: div,
                     fields: {
-                        "VARIABLE": [
-                            tmpName,
-                            tmpName
+                        ["LIST"]: [
+                            listName,
+                            listName
                         ]
                     }
                 }),
 
-                [ids[1]]: createBlock({
-                    opcode: BlockOpCode.DataItemNumOfList,
-                    parent: ids[0],
+                [div]: createBlock({
+                    opcode: BlockOpCode.OperatorDivide,
+                    parent: pd,
                     inputs: {
-                        "ITEM": getScratchType(ScratchType.string, (callExpression.arguments[1] as StringLiteral).value)
-                    },
-                    fields: {
-                        "LIST": [
-                            listName,
-                            listName,
-                        ]
+                        ["NUM1"]: getBlockNumber(base),
+                        ["NUM2"]: getScratchType(ScratchType.number, jsonFile[(callExpression.arguments[0] as StringLiteral).value].paramnames.length + 1)
                     }
                 }),
 
-                [ids[2]]: createBlock({
-                    opcode: BlockOpCode.DataDeleteOfList,
-                    next: ids[3],
+                [pd]: createBlock({
+                    opcode: BlockOpCode.OperatorRound,
                     inputs: {
-                        "INDEX": getVariable(tmpName)
-                    },
-
-                    fields: {
-                        "LIST": [
-                            listName,
-                            listName,
-                        ]
-                    }
-                }),
-
-                [ids[3]]: createBlock({
-                    opcode: BlockOpCode.ControlRepeat,
-                    inputs: {
-                        "TIMES": getScratchType(ScratchType.number, JSON.parse(readFileSync(scratchFile("classData.json")).toString())[(callExpression.arguments[0] as StringLiteral).value].params.length), // CHANGE THIS TO THE ACTUAL VALUE!
-                        "SUBSTACK": getSubstack(ids[4])
-                    }
-                }),
-
-                [ids[4]]: createBlock({
-                    opcode: BlockOpCode.DataDeleteOfList,
-                    inputs: {
-                        "INDEX": getVariable(tmpName)
-                    },
-
-                    fields: {
-                        "LIST": [
-                            listName,
-                            listName,
-                        ]
+                        ["NUM"]: getBlockNumber(div)
                     }
                 })
             });
+
+            return {
+                block: getBlockNumber(pd),
+                blockId: pd,
+                isStaticBlock: true
+            } 
         })
     }),
 }

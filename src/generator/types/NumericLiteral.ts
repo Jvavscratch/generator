@@ -1,17 +1,17 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : NumericLiteral.ts
-* Description       : Creates a number
+* Description       : Creates a number block
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster } from "../../util/blocks";
+import { BlockCluster } from "@jvavscratch/core";
 import { NumericLiteral } from "@babel/types"
-import { getScratchType, ScratchType } from "../../util/scratch-type"
+import { getScratchType, ScratchType } from "@jvavscratch/types"
 
 module.exports = ((BlockCluster: BlockCluster, NumericLiteral: NumericLiteral) => {
     return {

@@ -1,19 +1,19 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : sensing.ts
-* Description       : Sensing library (blocks)
+* Description       : Sensing library (types)
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
 import { CallExpression } from "@babel/types";
-import { BlockOpCode, buildData, typeData } from "../../util/types";
-import { BlockCluster, createBlock } from "../../util/blocks";
-import { Error } from "../../util/err";
-import { evaluate } from "../../util/evaluate";
+import { BlockOpCode, buildData, typeData } from "@jvavscratch/types";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
+import { JvavscratchError } from "@jvavscratch/core";
+import { evaluate } from "@jvavscratch/core";
 
 
 function createFunction(data: {
@@ -22,7 +22,7 @@ function createFunction(data: {
 }) {
     return ((callExpression: CallExpression, blockCluster: BlockCluster, parentID: string, buildData: buildData) => {
         if (callExpression.arguments.length < data.minArgs) {
-            new Error("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
+            new JvavscratchError("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
         }
 
         let args: typeData[] = [];

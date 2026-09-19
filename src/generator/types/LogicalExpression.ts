@@ -1,23 +1,23 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : LogicalExpression.ts
-* Description       : Creates a logical expression.
+* Description       : Creates a logical expression block
 *                   : Scratch is strict on these, so it must adhere
 *                   : by its rules.
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock, isSpikyType } from "../../util/blocks";
+import { BlockCluster, createBlock, isSpikyType } from "@jvavscratch/core";
 import { isCallExpression, LogicalExpression, SourceLocation } from "@babel/types"
-import { getBlockNumber } from "../../util/scratch-type"
-import { evaluate } from "../../util/evaluate"
-import { includes, uuid } from "../../util/scratch-uuid";
-import { BlockOpCode, buildData } from "../../util/types";
-import { Error, ErrorPosition } from "../../util/err";
+import { getBlockNumber, getScratchType, ScratchType } from "@jvavscratch/types"
+import { evaluate } from "@jvavscratch/core"
+import { includes, uuid } from "@jvavscratch/types";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { JvavscratchError, ErrorPosition } from "@jvavscratch/core";
 
 const numericalOperators: { [key: string]: BlockOpCode } = {
     '*': BlockOpCode.OperatorMultiply,
@@ -61,6 +61,41 @@ module.exports = ((BlockCluster: BlockCluster, LogicalExpression: LogicalExpress
     const rightHandSide = evaluate(LogicalExpression.right.type, BlockCluster, LogicalExpression.right, id, buildData);
 
     let op = numericalOperators[LogicalExpression.operator]
+
+    let leftBlock = leftHandSide.block;
+    let rightBlock = rightHandSide.block;
+
+    // For && and ||, automatically wrap non-boolean inputs with not(x == 0)
+    // to convert them to boolean blocks that Scratch accepts.
+    if (op == BlockOpCode.OperatorAnd || op == BlockOpCode.OperatorOr) {
+        function wrapAsBoolean(blockRef: any, cluster: BlockCluster, parent: string): any {
+            let equalId = uuid(includes.scratch_alphanumeric, 16);
+            let notId = uuid(includes.scratch_alphanumeric, 16);
+
+            cluster.addBlocks({
+                [equalId]: createBlock({
+                    opcode: BlockOpCode.OperatorEquals,
+                    parent: notId,
+                    inputs: {
+                        "OPERAND1": blockRef,
+                        "OPERAND2": getScratchType(ScratchType.number, "0")
+                    }
+                }),
+                [notId]: createBlock({
+                    opcode: BlockOpCode.OperatorNot,
+                    parent: parent,
+                    inputs: {
+                        "OPERAND": getBlockNumber(equalId)
+                    }
+                })
+            });
+
+            return getBlockNumber(notId);
+        }
+
+        leftBlock = wrapAsBoolean(leftBlock, BlockCluster, id);
+        rightBlock = wrapAsBoolean(rightBlock, BlockCluster, id);
+    }
 
     // We have to be very strict here.
     // Scratch straight up REFUSES to compile sometimes..
@@ -111,7 +146,7 @@ module.exports = ((BlockCluster: BlockCluster, LogicalExpression: LogicalExpress
 
         let loc = (LogicalExpression.loc as SourceLocation);
         if (errs.length != 0) {
-            new Error("Cannot resolve logical expression", buildData.originalSource, errs, loc.filename);
+            new JvavscratchError("Cannot resolve logical expression", buildData.originalSource, errs, loc.filename);
         }
     }
 
@@ -120,8 +155,8 @@ module.exports = ((BlockCluster: BlockCluster, LogicalExpression: LogicalExpress
             opcode: numericalOperators[LogicalExpression.operator],
             parent: ParentID,
             inputs: {
-                ["OPERAND1"]: leftHandSide.block,
-                ["OPERAND2"]: rightHandSide.block,
+                ["OPERAND1"]: leftBlock,
+                ["OPERAND2"]: rightBlock,
             }
         })
     });
@@ -133,3 +168,8 @@ module.exports = ((BlockCluster: BlockCluster, LogicalExpression: LogicalExpress
     }
 })
 
+// `module.exports = (...)` 会整体覆盖 exports 对象,把上面 `export function
+// isComparisonOperator` 生成的 `exports.isComparisonOperator` 一并抹掉 ——
+// 于是任何 `import { isComparisonOperator } from "./LogicalExpression"` 拿到
+// 的都是 undefined。这里在覆盖之后把具名导出挂回函数对象上。
+module.exports.isComparisonOperator = isComparisonOperator;

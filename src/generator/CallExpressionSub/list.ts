@@ -1,23 +1,41 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : list.ts
-* Description       : List library
+* Description       : List library (types)
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
 import { ArrayExpression, BooleanLiteral, CallExpression, StringLiteral } from "@babel/types";
-import { BlockOpCode, buildData, typeData } from "../../util/types";
-import { BlockCluster, createBlock } from "../../util/blocks";
-import { Error } from "../../util/err";
-import { evaluate } from "../../util/evaluate";
-import { includes, uuid } from "../../util/scratch-uuid";
-import { getBlockNumber, getScratchType, ScratchType } from "../../util/scratch-type";
+import { BlockOpCode, buildData, typeData } from "@jvavscratch/types";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
+import { JvavscratchError } from "@jvavscratch/core";
+import { evaluate } from "@jvavscratch/core";
+import { includes, uuid } from "@jvavscratch/types";
+import { getBlockNumber, getScratchType, ScratchType } from "@jvavscratch/types";
 import { join } from "path";
 import { readFileSync, writeFileSync } from "fs";
+import { scratchFile } from "@jvavscratch/core";
+
+function adjustIndex(indexBlock: any, buildData: buildData, blockCluster: BlockCluster): any {
+    if (buildData.listIndexBase === 0) {
+        let addId = uuid(includes.scratch_alphanumeric, 16);
+        blockCluster.addBlocks({
+            [addId]: createBlock({
+                opcode: BlockOpCode.OperatorAdd,
+                inputs: {
+                    "NUM1": indexBlock,
+                    "NUM2": getScratchType(ScratchType.number, 1)
+                }
+            })
+        });
+        return getBlockNumber(addId);
+    }
+    return indexBlock;
+}
 
 function createFunction(data: {
     minArgs: number,
@@ -27,7 +45,7 @@ function createFunction(data: {
 }) {
     return ((callExpression: CallExpression, blockCluster: BlockCluster, parentID: string, buildData: buildData) => {
         if (callExpression.arguments.length < data.minArgs) {
-            new Error("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
+            new JvavscratchError("Not enough arguments", buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
         }
 
         let args: typeData[] = [];
@@ -41,7 +59,7 @@ function createFunction(data: {
                     evaluate(type, blockCluster, callExpression.arguments[i], parentID, buildData)
                 )
             } else if (data.argTypes && data.argTypes[i] && data.argTypes[i] != type) {
-                new Error(`Expected '${data.argTypes[i]}' for argument '${i + 1}', got: '${type}'`, buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
+                new JvavscratchError(`Expected '${data.argTypes[i]}' for argument '${i + 1}', got: '${type}'`, buildData.originalSource, [{ line: callExpression.loc?.start.line || 1, column: callExpression.loc?.start.column || 1, length: (callExpression.loc?.end.column || 1) - (callExpression.loc?.start.column || 1) }], callExpression.loc?.filename || "")
             }
         }
 
@@ -114,7 +132,7 @@ module.exports = {
             })
 
             if ((callExpression.arguments[2] as BooleanLiteral).value) {
-                let jsonFile = join(__dirname, "../../assets/lists.json");
+                let jsonFile = scratchFile("lists.json");
                 let content = JSON.parse(readFileSync(jsonFile).toString()) as any[];
                 content.push(listName.value);
     
@@ -243,13 +261,14 @@ module.exports = {
             let itemID = uuid(includes.scratch_alphanumeric, 16);
             let evaluatedIndex = evaluate(args[1].type, blockCluster, args[1], indexID, buildData);
             let evaluatedItem =evaluate(args[2].type, blockCluster, args[2], itemID, buildData);
+            let indexBlock = adjustIndex(evaluatedIndex.block, buildData, blockCluster);
 
             blockCluster.addBlocks({
                 [parentID]: createBlock({
                     opcode: BlockOpCode.DataInsertAtList,
                     inputs: {
                         "ITEM": evaluatedItem.block,
-                        "INDEX": evaluatedIndex.block,
+                        "INDEX": indexBlock,
                     },
 
                     fields: {
@@ -273,12 +292,13 @@ module.exports = {
             let args = callExpression.arguments;
             let indexID = uuid(includes.scratch_alphanumeric, 16);
             let evaluatedIndex = evaluate(args[1].type, blockCluster, args[1], indexID, buildData);
+            let indexBlock = adjustIndex(evaluatedIndex.block, buildData, blockCluster);
 
             blockCluster.addBlocks({
                 [parentID]: createBlock({
                     opcode: BlockOpCode.DataDeleteOfList,
                     inputs: {
-                        "INDEX": evaluatedIndex.block,
+                        "INDEX": indexBlock,
                     },
 
                     fields: {
@@ -304,13 +324,14 @@ module.exports = {
             let itemID = uuid(includes.scratch_alphanumeric, 16);
             let evaluatedIndex = evaluate(args[1].type, blockCluster, args[1], indexID, buildData);
             let evaluatedItem =evaluate(args[2].type, blockCluster, args[2], itemID, buildData);
+            let indexBlock = adjustIndex(evaluatedIndex.block, buildData, blockCluster);
 
             blockCluster.addBlocks({
                 [parentID]: createBlock({
                     opcode: BlockOpCode.DataReplaceItemOfList,
                     inputs: {
                         "ITEM": evaluatedItem.block,
-                        "INDEX": evaluatedIndex.block,
+                        "INDEX": indexBlock,
                     },
 
                     fields: {

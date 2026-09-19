@@ -1,17 +1,17 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : SwitchStatement.ts
 * Description       : Creates a switch statement
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster } from "../util/blocks";
+import { BlockCluster } from "@jvavscratch/core";
 import * as t from "@babel/types";
-import { buildData } from "../util/types";
+import { buildData } from "@jvavscratch/types";
 
 function switchToIfStatement(switchStmt: t.SwitchStatement): t.IfStatement | null {
     const { discriminant, cases, loc } = switchStmt;

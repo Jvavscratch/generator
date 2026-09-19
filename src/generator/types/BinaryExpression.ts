@@ -1,21 +1,21 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : BinaryExpression.ts
 * Description       : Creates a binary expression. Adds 2 numbers.
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock, isSpiky, isSpikyType } from "../../util/blocks";
+import { BlockCluster, createBlock, isSpiky, isSpikyType } from "@jvavscratch/core";
 import { BinaryExpression, isCallExpression, SourceLocation } from "@babel/types"
-import { getBlockNumber } from "../../util/scratch-type"
-import { evaluate } from "../../util/evaluate"
-import { includes, uuid } from "../../util/scratch-uuid";
-import { BlockOpCode, buildData } from "../../util/types";
-import { Error, ErrorPosition } from "../../util/err";
+import { getBlockNumber } from "@jvavscratch/types"
+import { evaluate } from "@jvavscratch/core"
+import { includes, uuid } from "@jvavscratch/types";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { JvavscratchError, ErrorPosition } from "@jvavscratch/core";
 import { isComparisonOperator } from "./LogicalExpression";
 
 const operators: { [key: string]: BlockOpCode } = {
@@ -23,6 +23,7 @@ const operators: { [key: string]: BlockOpCode } = {
     "-": BlockOpCode.OperatorSubtract,
     "*": BlockOpCode.OperatorMultiply,
     "/": BlockOpCode.OperatorDivide,
+    "%": BlockOpCode.OperatorMod,
     "==": BlockOpCode.OperatorEquals,
     "===": BlockOpCode.OperatorEquals,
 
@@ -38,6 +39,7 @@ const numericalFields: { [key: string]: string } = {
     "-": "NUM",
     "*": "NUM",
     "/": "NUM",
+    "%": "NUM",
     "==": "OPERAND",
     "===": "OPERAND",
     "!=": "OPERAND",

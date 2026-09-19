@@ -1,19 +1,19 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : Identifier.ts
-* Description       : Creates a reference to an identifier
+* Description       : Creates a reference to an identifier block
 *                    
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../../util/blocks";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { Identifier } from "@babel/types"
-import { getBlockNumber, getVariable, getList } from "../../util/scratch-type"
-import { BlockOpCode, buildData } from "../../util/types";
-import { includes, uuid } from "../../util/scratch-uuid";
+import { getBlockNumber, getVariable, getList } from "@jvavscratch/types"
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { includes, uuid } from "@jvavscratch/types";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 

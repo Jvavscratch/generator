@@ -1,24 +1,25 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : FunctionDeclaration.ts
 * Description       : Creates a FunctionDeclaration (function foo(bar))
-*                    
+*
 * Revision History  :
-* Date		Author 			Comments
+* Date        Author          Comments
 * ------------------------------------------------------------------
-\n* 11/27/2025\tNeuronPulse\tModified\n* *
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock, createMutation } from "../util/blocks";
+import { BlockCluster, createBlock, createMutation } from "@jvavscratch/core";
 import { FunctionDeclaration, identifier, numericLiteral, variableDeclaration, variableDeclarator } from "@babel/types"
-import { Block, BlockOpCode, buildData, typeData } from "../util/types";
-import { getBlockNumber, getScratchType, ScratchType } from "../util/scratch-type";
-import { uuid, includes } from "../util/scratch-uuid"
-import { evaluate } from "../util/evaluate";
-import { createGlobal } from "../util/lib-convert";
-import { parseProgram } from "../env/parseProgram";
+import { Block, BlockOpCode, buildData, typeData } from "@jvavscratch/types";
+import { getBlockNumber, getScratchType, ScratchType } from "@jvavscratch/types";
+import { uuid, includes } from "@jvavscratch/types"
+import { evaluate } from "@jvavscratch/core";
+import { createGlobal } from "@jvavscratch/utils";
+import { parseProgram } from "@jvavscratch/core";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { scratchFile } from "@jvavscratch/core";
 
 module.exports = ((BlockCluster: BlockCluster, FunctionDeclaration: FunctionDeclaration, buildData: buildData) => {
 
@@ -37,10 +38,10 @@ module.exports = ((BlockCluster: BlockCluster, FunctionDeclaration: FunctionDecl
         }
     }
 
-    let path = join(__dirname, '../assets/fn.json');
+    let path = scratchFile("fn.json");
     let endCode = uuid(includes.scratch_alphanumeric, 5);
 
-    let object = {
+    let object: any = {
         async: FunctionDeclaration.async,
         endCode,
     };
@@ -48,6 +49,9 @@ module.exports = ((BlockCluster: BlockCluster, FunctionDeclaration: FunctionDecl
     if (hasReturn) {
         let retCode = uuid(includes.scratch_alphanumeric, 5);
         object["retCode"] = retCode;
+        if (buildData.customBlockReturn) {
+            object["returnType"] = "1";
+        }
     }
 
     let readJson = JSON.parse(readFileSync(path).toString());

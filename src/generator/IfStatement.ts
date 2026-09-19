@@ -1,23 +1,21 @@
-﻿/*******************************************************************
+/*******************************************************************
 * Copyright         : 2024 saaawdust
 * File Name         : IfStatement.ts
 * Description       : Creates a If Statement
-*                    
-* Revision History  :
-* Date		Author 		Comments
-* ------------------------------------------------------------------
-* 09/11/2024	saaawdust	Initial Creation
-* 11/27/2025	NeuronPulse	Modified
 *
+* Revision History  :
+* Date        Author          Comments
+* ------------------------------------------------------------------
+* 10/12/2025  NeuronPulse     Modified
 /******************************************************************/
 
-import { BlockCluster, createBlock } from "../util/blocks";
+import { BlockCluster, createBlock } from "@jvavscratch/core";
 import { BlockStatement, IfStatement, SourceLocation } from "@babel/types"
-import { BlockOpCode, buildData } from "../util/types";
-import { parseProgram } from "../env/parseProgram";
-import { includes, uuid } from "../util/scratch-uuid";
-import { evaluate } from "../util/evaluate";
-import { getBlockNumber, getScratchType, getSubstack, ScratchType } from "../util/scratch-type";
+import { BlockOpCode, buildData } from "@jvavscratch/types";
+import { parseProgram } from "@jvavscratch/core";
+import { includes, uuid } from "@jvavscratch/types";
+import { evaluate } from "@jvavscratch/core";
+import { getBlockNumber, getScratchType, getSubstack, ScratchType } from "@jvavscratch/types";
 import { isBlockStatement } from "@babel/types";
 import { isIfStatement } from "@babel/types";
 
@@ -51,15 +49,24 @@ function parseIf(Block_Cluster: BlockCluster, IfStatement: IfStatement, buildDat
 
     let evaluated = evaluate(IfStatement.test.type, Block_Cluster, IfStatement.test, id, buildData).block;
     let extra: {[key: string]: any} = {};
-    if (IfStatement.test.type != "LogicalExpression" && !(IfStatement.test.type == "BinaryExpression" && ["<", ">", "==", "===", "!=", "!=="].includes(IfStatement.test.operator)))
+    if (IfStatement.test.type != "LogicalExpression" && !(IfStatement.test.type == "BinaryExpression" && ["<", ">", "==", "===", "!=", "!==", "<=", ">="].includes(IfStatement.test.operator)))
     {
-        let sId = uuid(includes.scratch_alphanumeric, 16)
-        extra[sId] = createBlock({
+        let equalId = uuid(includes.scratch_alphanumeric, 16);
+        let sId = uuid(includes.scratch_alphanumeric, 16);
+        extra[equalId] = createBlock({
             opcode: BlockOpCode.OperatorEquals,
-            parent: id,
+            parent: sId,
             inputs: {
                 "OPERAND1": evaluated,
-                "OPERAND2": getScratchType(ScratchType.number, "1")
+                "OPERAND2": getScratchType(ScratchType.number, "0")
+            }
+        });
+
+        extra[sId] = createBlock({
+            opcode: BlockOpCode.OperatorNot,
+            parent: id,
+            inputs: {
+                "OPERAND": getBlockNumber(equalId)
             }
         });
 
