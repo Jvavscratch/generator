@@ -1,7 +1,7 @@
 {
   "name": "@jvavscratch/generator",
   "version": "1.0.0",
-  "description": "jvavscratch 代码生成器：AST 节点 → Scratch 积木，并在导入时注册进 core 的派发表",
+  "description": "Code generators for jvavscratch: one per Babel AST node, registered into core's dispatch table on import",
   "license": "MPL-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

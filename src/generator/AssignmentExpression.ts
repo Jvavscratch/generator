@@ -25,7 +25,8 @@ module.exports = ((BlockCluster: BlockCluster, AssignmentExpression: AssignmentE
 
     keysGenerated.push(ID);
 
-    // 自定义函数调用：x = foo() -> 先调用 foo()，再把返回值赋给 x
+    // User-defined function call: x = foo() -> call foo() first, then assign
+    // its return value to x
     if (AssignmentExpression.operator === "=" && AssignmentExpression.right.type === "CallExpression") {
         let callee = (AssignmentExpression.right as any).callee;
         if (callee && callee.type === "Identifier") {
@@ -77,7 +78,7 @@ module.exports = ((BlockCluster: BlockCluster, AssignmentExpression: AssignmentE
                 });
 
                 if (buildData.customBlockReturn && fnData[originalName].returnType) {
-                    // TurboWarp 返回值扩展：procedures_call 作为 reporter 嵌入
+                    // TurboWarp return-value extension: procedures_call is embedded as a reporter
                     BlockCluster.blocks[callId].parent = ID;
                     BlockCluster.addBlocks({
                         [ID]: createBlock({
@@ -91,7 +92,7 @@ module.exports = ((BlockCluster: BlockCluster, AssignmentExpression: AssignmentE
                         })
                     });
                 } else {
-                    // 普通模式：先调用，再读取临时变量
+                    // Plain mode: call first, then read the temporary variable
                     let retCode = fnData[originalName].retCode;
                     let valueBlock = retCode ? getVariable(retCode) : getScratchType(ScratchType.number, 0);
 

@@ -57,7 +57,8 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
             return require('./types/NewExpression')(BlockCluster, VariableDeclaration, declarations.init, buildData, variableName)
         }
 
-        // 自定义函数调用：let x = foo() -> 先调用 foo()，再把返回值赋给 x
+        // User-defined function call: let x = foo() -> call foo() first, then
+        // assign its return value to x
         if (declarations.init != null && declarations.init.type == "CallExpression") {
             let callee = (declarations.init as any).callee;
             if (callee && callee.type === "Identifier") {
@@ -107,7 +108,7 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
                     let assignId = uuid(includes.scratch_alphanumeric, 16);
 
                     if (buildData.customBlockReturn && fnData[originalName].returnType) {
-                        // TurboWarp 返回值扩展：procedures_call 作为 reporter 嵌入
+                        // TurboWarp return-value extension: procedures_call is embedded as a reporter
                         blocks[callId].parent = assignId;
                         blocks[assignId] = createBlock({
                             opcode: BlockOpCode.DataSetVariableTo,
@@ -119,7 +120,7 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
                             }
                         });
                     } else {
-                        // 普通模式：先调用，再读取临时变量
+                        // Plain mode: call first, then read the temporary variable
                         let retCode = fnData[originalName].retCode;
                         let valueBlock = retCode ? getVariable(retCode) : getScratchType(ScratchType.number, 0);
 

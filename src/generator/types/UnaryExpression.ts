@@ -2,7 +2,7 @@
 * Copyright         : 2024 saaawdust
 * File Name         : UnaryExpression.ts
 * Description       : Creates a unary expression block, that be "+",
-*                   ： "-", or "!".
+*                   : "-", or "!".
 *                    
 * Revision History  :
 * Date        Author          Comments

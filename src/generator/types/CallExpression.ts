@@ -25,7 +25,8 @@ module.exports = ((BlockCluster: BlockCluster, CallExpression: CallExpression, p
         let libName = callee.object.name;
         let fnName = callee.property.name;
 
-                // 内置库优先(与拆分前一致),其次第三方运行时包。
+                // Built-in libraries take priority (as before the split);
+                // third-party runtime packages come after.
         let requiredLib: any = getLibrary("value", libName);
 
         if (!requiredLib) {

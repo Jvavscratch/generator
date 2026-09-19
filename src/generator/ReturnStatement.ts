@@ -31,7 +31,7 @@ function parseReturn(Block_Cluster: BlockCluster, ReturnStatement: ReturnStateme
         let evaluated = evaluate(arg.type, Block_Cluster, arg, newId, buildData);
 
         if (buildData.customBlockReturn && fnData.returnType) {
-            // TurboWarp 返回值扩展：使用 procedures_return
+            // TurboWarp return-value extension: use procedures_return
             let finalId = uuid(includes.scratch_alphanumeric, 16);
             Block_Cluster.addBlocks({
                 [finalId]: createBlock({
@@ -49,7 +49,7 @@ function parseReturn(Block_Cluster: BlockCluster, ReturnStatement: ReturnStateme
 
             return {keysGenerated: [finalId]}
         } else {
-            // 普通模式：使用临时变量
+            // Plain mode: use a temporary variable
             let finalId = uuid(includes.scratch_alphanumeric, 16);
             let retCode = fnData.retCode;
 

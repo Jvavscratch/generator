@@ -15,12 +15,16 @@ import { ExpressionStatement } from "@babel/types"
 import { buildData } from "@jvavscratch/types";
 
 /**
- * 表达式语句:把 `expression.type` 交给对应的**语句**生成器
- * (`AssignmentExpression` / `CallExpression` / `UpdateExpression` / `AwaitExpression`)。
+ * Expression statement: hands `expression.type` off to the matching **statement**
+ * generator (`AssignmentExpression` / `CallExpression` / `UpdateExpression` /
+ * `AwaitExpression`).
  *
- * 原实现是 `join(__dirname, "./" + type) + ".ts"` 再 `existsSync` —— 编译产物是
- * `.js`,这个检查恒为 false,于是**所有**表达式语句在打包运行时会静默变成
- * "No `impl`" 并被丢弃。改走注册表后不再有文件系统探测,该故障类别消失。
+ * The original implementation probed for the file with
+ * `join(__dirname, "./" + type) + ".ts"` followed by `existsSync` — but the
+ * compiled artifact is `.js`, so that check was always false and **every**
+ * expression statement silently turned into a "No `impl`" and got dropped in a
+ * packaged run. Routing through the registry removes the filesystem probe, and
+ * with it that entire class of failure.
  */
 module.exports = ((BlockCluster: BlockCluster, ExpressionStatement: ExpressionStatement, buildData: buildData) => {
     let exprType = ExpressionStatement.expression.type;

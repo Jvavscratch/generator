@@ -168,8 +168,10 @@ module.exports = ((BlockCluster: BlockCluster, LogicalExpression: LogicalExpress
     }
 })
 
-// `module.exports = (...)` 会整体覆盖 exports 对象,把上面 `export function
-// isComparisonOperator` 生成的 `exports.isComparisonOperator` 一并抹掉 ——
-// 于是任何 `import { isComparisonOperator } from "./LogicalExpression"` 拿到
-// 的都是 undefined。这里在覆盖之后把具名导出挂回函数对象上。
+// A bare `module.exports = (...)` replaces the whole exports object, which
+// wipes out the `exports.isComparisonOperator` that the `export function
+// isComparisonOperator` above produced — so any
+// `import { isComparisonOperator } from "./LogicalExpression"` would resolve to
+// undefined. Here the named export is hung back onto the function object after
+// the assignment.
 module.exports.isComparisonOperator = isComparisonOperator;
