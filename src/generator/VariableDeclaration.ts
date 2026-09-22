@@ -33,7 +33,6 @@ module.exports = ((BlockCluster: BlockCluster, VariableDeclaration: VariableDecl
         if (variableName.startsWith("_g_")) {
             global = true;
             variableName = variableName.slice(3);
-            variableName = variableName.slice(3);
         } else if (variableName.startsWith("_c_")) { 
             cloud = true;
             global = true;
