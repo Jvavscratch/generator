@@ -368,7 +368,7 @@ module.exports = {
         body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string) => {
             let firstArg: any = callExpression.arguments[0];
 
-            if (firstArg.type != "StringLiteral" || firstArg.value && firstArg.value != "font" && firstArg.value != "back") {
+            if (firstArg.type != "StringLiteral" || firstArg.value && firstArg.value != "front" && firstArg.value != "back") {
                 firstArg = "front"
             } else if (firstArg.type == "StringLiteral") {
                 firstArg = firstArg.value;
@@ -393,7 +393,7 @@ module.exports = {
         body: ((parsedArguments: typeData[], callExpression: CallExpression, blockCluster: BlockCluster, parentID: string) => {
             let firstArg: any = callExpression.arguments[0];
 
-            if (firstArg.type != "StringLiteral" || firstArg.value && firstArg.value != "font" && firstArg.value != "back") {
+            if (firstArg.type != "StringLiteral" || firstArg.value && firstArg.value != "front" && firstArg.value != "back") {
                 firstArg = "front"
             } else if (firstArg.type == "StringLiteral") {
                 firstArg = firstArg.value;
